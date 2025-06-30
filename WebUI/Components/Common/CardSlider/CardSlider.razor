@@ -1,0 +1,46 @@
+﻿<div class="d-flex align-items-center gap-1 w-100">
+    <button class="slide-button" @onclick="ScrollLeft">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+
+    <div class="d-flex flex-grow-0 flex-shrink-1 w-100"
+         style="gap: 10px; overflow-x: scroll; scrollbar-width: none;"
+         @ref="scrollContainer">
+        @ChildContent
+    </div>
+
+    <button class="slide-button" @onclick="ScrollRight">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+</div>
+
+@code {
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private IJSObjectReference? scrollModule;
+    private ElementReference scrollContainer;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            scrollModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/scrolling.js");
+        }
+    }
+
+    private async Task ScrollLeft()
+    {
+        if (scrollModule != null)
+            await scrollModule.InvokeVoidAsync("scrollContainerBy", scrollContainer, -205);
+    }
+
+    private async Task ScrollRight()
+    {
+        if (scrollModule != null)
+            await scrollModule.InvokeVoidAsync("scrollContainerBy", scrollContainer, 205);
+    }
+
+}

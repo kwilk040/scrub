@@ -1,0 +1,88 @@
+@using Application.Services.Interfaces
+@using ParserService
+@using WebUI.Services.Interfaces
+@using Status = ParserService.Status
+@inherits DynamicStateComponentBase
+@inject Parser.ParserClient ParserClient
+@inject IUiNotificationService UiNotificationService
+@inject IUserSessionService UserSessionService
+
+<section class="mx-4 my-3">
+    <header class="d-flex justify-content-between align-items-center mx-4 my-3">
+        <h2>Load Spotify Scrobbles</h2>
+        @if (IsLoading)
+        {
+            <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Secondary"/>
+        }
+    </header>
+
+    <p class="fst-italic py-3 text-secondary">
+        Load exported scrobbles from Spotify, and save them to your account.
+    </p>
+
+    <div class="d-flex gap-1 align-items-center">
+        <div>
+            <InputFile OnChange="HandleFileSelected"/>
+        </div>
+        <button class="btn btn-primary"
+                @onclick="async() => await HandleFileSend()"
+                disabled="@(!CanUpload || IsLoading)">
+            Save
+        </button>
+    </div>
+</section>
+
+@code {
+    private IBrowserFile? File { get; set; }
+    private string? StatusMessage { get; set; }
+    private ParseSpotifyExportResponse? ParseSpotifyExportResponse { get; set; }
+
+    private bool CanUpload => File is not null;
+
+    private Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        File = e.File;
+        StatusMessage = $"File selected: {File.Name}";
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleFileSend()
+    {
+        if (File is null)
+        {
+            StatusMessage = "No file selected.";
+            return;
+        }
+
+        await ExecuteLoadingActionAsync(async () =>
+        {
+            try
+            {
+                using var stream = File.OpenReadStream(maxAllowedSize: 100 * 1024 * 1024);
+                using var reader = new StreamReader(stream);
+                string json = await reader.ReadToEndAsync();
+
+                ParseSpotifyExportResponse = await ParserClient.ParseSpotifyExportAsync(new ParseSpotifyExportRequest()
+                {
+                    Json = json,
+                    UserId = UserSessionService.GetUserSessionData().UserId.ToString(),
+                });
+
+                if (ParseSpotifyExportResponse.Status is Status.Success or Status.PartialSuccess)
+                {
+                    await UiNotificationService.PushSuccessAsync(ParseSpotifyExportResponse.Message);
+                }
+                else
+                {
+                    await UiNotificationService.PushErrorAsync(ParseSpotifyExportResponse.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                UiNotificationService.PushErrorAsync(ex.Message);
+            }
+        });
+    }
+
+}

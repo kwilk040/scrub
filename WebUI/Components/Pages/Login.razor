@@ -1,0 +1,77 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Core.Model
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using WebUI.Components.Layout
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+
+@layout SignLayout
+
+
+
+<EditForm Model="Input" method="post" OnValidSubmit="HandleLogin" FormName="loginForm">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <div style="min-width: 300px" class="d-flex flex-column gap-2">
+        <div>
+            <label for="login" class="form-label">Login</label>
+            <InputText @bind-Value="Input.UserName" id="login" placeholder="Username"
+                       class="form-control"></InputText>
+        </div>
+        <div>
+            <label for="password" class="form-label">Password</label>
+            <InputText @bind-Value="Input.Password" id="password" placeholder="Password" type="password"
+                       class="form-control"></InputText>
+        </div>
+        <div class="pt-1">
+            <button class="btn bg-pine text-text m-auto w-100" type="submit">Sign In</button>
+        </div>
+        <p class="text-center">
+            Don't have an account?
+            <a role="button" class="w-100 text-center" @onclick="NavigateToRegister">Sign Up</a>
+        </p>
+    </div>
+
+</EditForm>
+
+
+@code {
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+    }
+
+    private void NavigateToRegister() => NavigationManager.NavigateTo("/register");
+
+    private async Task HandleLogin()
+    {
+        var result = await SignInManager.PasswordSignInAsync(Input.UserName, Input.Password, true, lockoutOnFailure: false);
+        Console.WriteLine(result);
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User logged in.");
+            NavigationManager.NavigateTo(ReturnUrl ?? "/");
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required] public string UserName { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+    }
+
+}

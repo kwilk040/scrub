@@ -1,0 +1,93 @@
+﻿@using Application.Services.Interfaces
+@using Core
+@using Core.DTO
+@using Core.Enums
+@using WebUI.Components.Common.CardSlider
+@using WebUI.Components.Common.SectionLoader
+@rendermode InteractiveServer
+@inject IScrobbleService ScrobbleService
+@inject IJSRuntime JSRuntime
+
+<section id="top-tracks" class="w-100 rounded-5 p-3">
+    <header class="d-flex justify-content-between mx-4 my-3">
+        <h2>Top Tracks</h2>
+        <select name="" id="" @onchange="OnRangeChanged">
+            @foreach (var rangeOption in RangeOptions)
+            {
+                <option value="@rangeOption">@rangeOption.GetDisplayName()</option>
+            }
+        </select>
+    </header>
+    <section class="d-flex justify-content-center align-items-center"
+             style="min-height: 250px;">
+        @if (!isLoaded || topTracks is null)
+        {
+            <SectionLoader/>
+        }
+        else
+        {
+            <CardSlider>
+                @foreach (var track in topTracks.Select((value, i) => new { i, value }))
+                {
+                    <SliderCard Id=@(track.i + 1) Title="@track.value.Title"
+                                SubTitle="@PrepareSubtitle(track.value)" Scrubs="track.value.Count"
+                                Cover="@track.value.CoverUrl"></SliderCard>
+                }
+            </CardSlider>
+        }
+    </section>
+</section>
+
+@code {
+
+    private RangeSelection SelectedRange { get; set; } = RangeSelection.Today;
+    private static List<RangeSelection> RangeOptions => Enum.GetValues<RangeSelection>().ToList();
+
+    private bool isLoaded;
+
+    private IReadOnlyList<TrackDto>? topTracks;
+    private IJSObjectReference? scrollModule;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            scrollModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/scrolling.js");
+            topTracks = await ScrobbleService.GetTopTracksAsync(SelectedRange);
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnRangeChanged(ChangeEventArgs e)
+    {
+        isLoaded = false;
+        StateHasChanged();
+        await Task.Delay(1000);
+        SelectedRange = Enum.Parse<RangeSelection>(e.Value.ToString());
+        topTracks = await ScrobbleService.GetTopTracksAsync(SelectedRange);
+        isLoaded = true;
+        StateHasChanged();
+    }
+
+    private static string PrepareSubtitle(TrackDto track)
+    {
+        switch (track.Artists.Count)
+        {
+            case > 1:
+            {
+                var first = track.Artists.First();
+                var more = track.Artists.Count - 1;
+                return $"{first} +{more}";
+            }
+            case 1:
+            {
+                var first = track.Artists.First();
+                return $"{first}";
+            }
+            default:
+                return "No artists";
+        }
+    }
+
+}

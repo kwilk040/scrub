@@ -1,0 +1,41 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using WebUI.Components.Common.Divider
+@using WebUI.Components.Features.LastScrobbles
+@using WebUI.Components.Features.Pulse
+@using WebUI.Components.Features.TopAlbums
+@using WebUI.Components.Features.TopArtists
+@using WebUI.Components.Features.TopTracks
+@using WebUI.Components.Layout
+@using WebUI.Services.Interfaces
+@inject IUserSessionInitializer UserSessionInitializer
+@layout MainLayout
+
+
+@attribute [Authorize]
+
+@if (_isInitialized)
+{
+    <TopTracks/>
+    <Divider/>
+    <TopAlbums/>
+    <Divider/>
+    <TopArtists/>
+    <Divider/>
+    <Pulse/>
+    <Divider/>
+    <LastScrobbles/>
+    <Divider/>
+}
+
+@code
+{
+    private bool _isInitialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await UserSessionInitializer.InitializeUserSession();
+        _isInitialized = true;
+        StateHasChanged();
+    }
+}

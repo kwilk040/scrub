@@ -1,0 +1,56 @@
+﻿@using Application.Services
+@using Application.Services.Interfaces
+@using Core.DTO
+@using WebUI.Components.Common.SectionLoader
+@using WebUI.Services
+@inject IScrobbleService ScrobbleService
+
+<section id="last-scrobbles" class="d-flex flex-column w-100 rounded-5 p-3">
+    <header class="d-flex justify-content-between mx-4 my-3">
+        <h2>Last Scrobbles</h2>
+        <div class="d-flex align-items-center">
+            @if (isRefreshing)
+            {
+                <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Secondary"/>
+            }
+            <i class="sync-button bi bi-arrow-repeat fs-4"/>
+        </div>
+    </header>
+    <section id="last-scrobbles-table-section" class="mx-4 my-3">
+        @if (!isLoaded)
+        {
+            <SectionLoader/>
+        }
+        else
+        {
+            <table id="scrobble-table">
+                <tbody>
+                @foreach (var scrobble in Scrobbles)
+                {
+                    <ScrobbleRow Scrobble="scrobble"/>
+                }
+                </tbody>
+            </table>
+        }
+    </section>
+    <footer class="d-flex justify-content-end w-100 px-4">
+        <a class="text-muted">Explore all scrobbles</a>
+    </footer>
+</section>
+
+@code{
+    private bool isRefreshing = false;
+    private bool isLoaded;
+    private IReadOnlyList<ScrobbleDto>? Scrobbles { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Scrobbles = await ScrobbleService.GetLastScrobblesAsync();
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+}

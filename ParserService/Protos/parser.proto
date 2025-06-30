@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option csharp_namespace = "ParserService";
+
+package parser;
+
+service Parser {
+  rpc ParseSpotifyExport (ParseSpotifyExportRequest) returns (ParseSpotifyExportResponse);
+}
+
+message ParseSpotifyExportRequest {
+  string json = 1;
+  string user_id = 2;
+}
+
+message ParseSpotifyExportResponse {
+  int32 scrobble_count = 1;
+  Status status = 2;
+  optional string message = 3;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_SUCCESS = 1;
+  STATUS_ERROR = 2;
+  STATUS_PARTIAL_SUCCESS = 3;
+}

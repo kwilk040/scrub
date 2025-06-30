@@ -1,0 +1,30 @@
+﻿@using Core.DTO
+<tr>
+    <td>
+
+        <span class="text-subtle">@Scrobble.ListenedAt</span>
+    </td>
+    <td class="px-3">
+        @if (Scrobble.CoverUrl is not null)
+        {
+            <img style="width: 25px;"
+                 src="@Scrobble.CoverUrl" alt="artist">
+        }
+        else
+        {
+            <img style="width: 25px;"
+                 src="https://lastfm.freetls.fastly.net/i/u/300x300/915c1d98f55d341626c3f87e1f522815.png" alt="artist">
+        }
+
+    </td>
+    <td>
+        <span>@string.Join(',', Scrobble.Track.Artists)</span>
+        <span>-</span>
+        <span>@Scrobble.Track.Title</span>
+    </td>
+</tr>
+
+@code {
+
+    [Parameter] public ScrobbleDto? Scrobble { get; set; }
+}

@@ -1,0 +1,71 @@
+﻿@using Application.Services.Interfaces
+@using Core
+@using Core.DTO
+@using Core.Enums
+@using WebUI.Components.Common.CardSlider
+@using WebUI.Components.Common.SectionLoader
+@rendermode InteractiveServer
+@inject IScrobbleService ScrobbleService
+@inject IJSRuntime JSRuntime
+
+<section id="top-artists" class="w-100 rounded-5 p-3">
+    <header class="d-flex justify-content-between mx-4 my-3">
+        <h2>Top Artists</h2>
+        <select name="" id="" @onchange="OnRangeChanged">
+            @foreach (var rangeOption in RangeOptions)
+            {
+                <option value="@rangeOption">@rangeOption.GetDisplayName()</option>
+            }
+        </select>
+    </header>
+    <section class="d-flex justify-content-center align-items-center" style="min-height: 250px;">
+        @if (!isLoaded || topArtists is null)
+        {
+            <SectionLoader/>
+        }
+        else
+        {
+            <CardSlider>
+                @foreach (var artist in topArtists.Select((value, i) => new { i, value }))
+                {
+                    <SliderCard Id=@(artist.i + 1) Title="@artist.value.Name"
+                                Scrubs="@artist.value.Count"></SliderCard>
+                }
+            </CardSlider>
+        }
+    </section>
+</section>
+
+@code {
+    private RangeSelection SelectedRange { get; set; } = RangeSelection.Today;
+    private bool isLoaded;
+
+    private static List<RangeSelection> RangeOptions => Enum.GetValues<RangeSelection>().ToList();
+
+    private IReadOnlyList<ArtistDto>? topArtists;
+    private IJSObjectReference? scrollModule;
+    private Guid? _userId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            scrollModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/scrolling.js");
+            topArtists = await ScrobbleService.GetTopArtistsAsync(SelectedRange);
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnRangeChanged(ChangeEventArgs e)
+    {
+        isLoaded = false;
+        StateHasChanged();
+        await Task.Delay(1000);
+        SelectedRange = Enum.Parse<RangeSelection>(e.Value.ToString());
+        topArtists = await ScrobbleService.GetTopArtistsAsync(SelectedRange);
+        isLoaded = true;
+        StateHasChanged();
+    }
+
+}

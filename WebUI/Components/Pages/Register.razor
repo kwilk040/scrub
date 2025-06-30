@@ -1,0 +1,91 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using Core.Model
+@using Microsoft.AspNetCore.Identity
+@using WebUI.Components.Layout
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject ILogger<Register> Logger
+@inject NavigationManager NavigationManager
+
+@layout SignLayout
+
+<div style="min-width: 300px" class="d-flex flex-column gap-2">
+    <EditForm Model="Input" method="post" OnValidSubmit="RegisterUser" FormName="register">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+        <div>
+            <label for="login" class="form-label">Login</label>
+            <InputText @bind-Value="Input.UserName" id="login" class="form-control" autocomplete="username"/>
+        </div>
+        <div>
+            <label for="password" class="form-label">Password</label>
+            <InputText type="password" @bind-Value="Input.Password" id="password" class="form-control"
+                       autocomplete="new-password"/>
+        </div>
+        <div>
+            <label for="invite-code" class="form-label">Invite Code</label>
+            <InputText @bind-Value="Input.InviteCode" id="invite-code" class="form-control"/>
+        </div>
+        <div class="pt-1">
+            <button type="submit" class="btn bg-pine text-text m-auto w-100">Sign Up</button>
+        </div>
+        <p class="text-center">
+            Already have an account ?
+            <a href="/login" class="w-100 text-center" @onclick="NavigateToLogin">Sign In</a>
+        </p>
+    </EditForm>
+</div>
+
+@code
+{
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
+
+    private void NavigateToLogin() => NavigationManager.NavigateTo("/login");
+
+    public async Task RegisterUser()
+    {
+        Logger.LogInformation("Invite code: " + Input.InviteCode);
+        var user = CreateUser();
+
+        await UserStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
+        var result = await UserManager.CreateAsync(user, Input.Password);
+
+        if (!result.Succeeded)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private ApplicationUser CreateUser()
+    {
+        try
+        {
+            return Activator.CreateInstance<ApplicationUser>();
+        }
+        catch
+        {
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
+                                                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor.");
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "UserName")]
+        public string UserName { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Invite Code")]
+        public string InviteCode { get; set; } = "";
+    }
+}

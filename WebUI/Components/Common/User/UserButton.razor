@@ -1,0 +1,22 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using WebUI.Components.Features.UserAside
+@inject UserAsideService AsideService
+
+@attribute [Authorize]
+
+<AuthorizeView>
+    <button class="d-flex gap-1 btn btn-primary bg-surface" @onclick="OpenAside">
+        <span>@context.User.Identity?.Name</span>
+        <i class="bi bi-person"/>
+    </button>
+</AuthorizeView>
+
+@code {
+
+    private async Task OpenAside()
+    {
+        await AsideService.RequestOpenAsync();
+    }
+
+}

@@ -1,0 +1,117 @@
+@page "/user/settings"
+@inject IUiHelperService UiHelperService
+@inject IUserSessionInitializer UserSessionInitializer
+@inject IApiKeyService ApiKeyService
+@using Application.Services.Interfaces
+@using Core.DTO
+@using Microsoft.AspNetCore.Authorization
+@using WebUI.Components.Common.Divider
+@using WebUI.Components.Features.Parser
+@using WebUI.Components.Layout
+@using WebUI.Services.Interfaces
+@inherits DynamicStateComponentBase;
+@layout MainLayout
+@attribute [Authorize]
+
+@if (_isInitialized)
+{
+    <h1 class="p-3 mx-4">Settings</h1>
+    <Divider/>
+    <section id="last-scrobbles" class="d-flex flex-column w-100 rounded-5 p-3">
+        <header class="d-flex justify-content-between align-items-center mx-4 my-3">
+            <h2>ListenBrainz</h2>
+            @if (IsLoading)
+            {
+                <Spinner Type="SpinnerType.Dots" Class="me-3" Color="SpinnerColor.Secondary"/>
+            }
+        </header>
+        <section id="last-scrobbles-table-section" class="mx-4 my-3">
+            <div class="mb-2">
+                <label>Your API Keys</label>
+                @if (ApiKeys is not null)
+                {
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Api Key</th>
+                            <th>Name</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var apiKey in ApiKeys)
+                        {
+                            <tr>
+                                <td>@apiKey.Key</td>
+                                <td>@apiKey.Name</td>
+                                <td>@apiKey.CreatedAt</td>
+                                <td class="d-flex gap-1">
+                                    <button class="btn btn-primary"
+                                            @onclick="async () => await DeleteApiKeyAsync(apiKey.Key)">
+                                        <i class="bi bi-trash"/>
+                                    </button>
+                                    <button class="btn btn-primary"
+                                            @onclick="async () => await UiHelperService.CopyToClipboardAsync(apiKey.Key)">
+                                        <i class="bi bi-copy"/>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div class="d-flex flex-column">
+                <label>Generate new API Key</label>
+                <div class="d-flex gap-1">
+                    <input @bind="ApiKeyName" type="text" class="w-100" placeholder="Enter key name:">
+                    <button class="btn btn-primary" @onclick="GenerateApiKey">
+                        <i class="bi bi-save2"/>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </section>
+    <Divider/>
+    <ParserSection/>
+    <Divider/>
+}
+
+@code {
+    bool _isInitialized;
+    IReadOnlyCollection<ApiKeyDto>? ApiKeys { get; set; }
+    string? ApiKeyName { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await UserSessionInitializer.InitializeUserSession();
+        _isInitialized = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchUserApiKeysAsync();
+    }
+
+    private async Task GenerateApiKey()
+    {
+        var apiKey = await ApiKeyService.GenerateApiKeyAsync(ApiKeyName ?? "default_name");
+        await ExecuteLoadingActionAsync(async () => ApiKeys = await ApiKeyService.GetApiKeysForUserAsync());
+        StateHasChanged();
+    }
+
+
+    private async Task FetchUserApiKeysAsync() =>
+        await ExecuteLoadingActionAsync(async () => ApiKeys = await ApiKeyService.GetApiKeysForUserAsync());
+
+    private async Task DeleteApiKeyAsync(string apiKey)
+    {
+        await ApiKeyService.DeleteApiKeyAsync(apiKey);
+        await ExecuteLoadingActionAsync(async () => ApiKeys = await ApiKeyService.GetApiKeysForUserAsync());
+        StateHasChanged();
+    }
+
+}

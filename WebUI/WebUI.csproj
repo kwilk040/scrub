@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Application\Application.csproj"/>
+        <ProjectReference Include="..\Core\Core.csproj"/>
+        <ProjectReference Include="..\Infrastructure\Infrastructure.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <_ContentIncludedByDefault Remove="Components\Features\LastScrobbles\LastScrobbles.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\LastScrobbles\ScrobbleRow.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\Pulse\Charts\AnnualBarChart.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\Pulse\Charts\MonthlyBarChart.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\Pulse\Charts\WeeklyBarChart.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\Pulse\Pulse.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\TopAlbums\TopAlbums.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\TopArtists\TopArtists.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\TopTracks\TopTracks.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Features\UserAside\UserAside.razor"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blazor.Bootstrap" Version="3.3.1"/>
+        <PackageReference Include="Google.Protobuf" Version="3.31.1"/>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.71.0"/>
+        <PackageReference Include="Grpc.Tools" Version="2.72.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.6">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="../ParserService/Protos/parser.proto" GrpcServices="Client" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Components\Features\Pulse\Charts\AnnualBarChart.razor" />
+      <UpToDateCheckInput Remove="Components\Features\Pulse\Charts\MonthlyBarChart.razor" />
+      <UpToDateCheckInput Remove="Components\Features\Pulse\Charts\WeeklyBarChart.razor" />
+    </ItemGroup>
+</Project>

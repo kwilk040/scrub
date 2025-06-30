@@ -1,0 +1,70 @@
+﻿@using Application.Services
+@using Application.Services.Interfaces
+@using Core
+@using Core.Enums
+@inject IScrobbleService ScrobbleService
+
+<section id="pulse" class="w-100 rounded-5 p-3">
+    <header class="d-flex justify-content-between mx-4 my-3">
+        <h2>Pulse</h2>
+        <select name="range-options" id="pulse-" @onchange="OnSelectionChanged">
+            @foreach (var rangeOption in RangeOptions)
+            {
+                <option value="@rangeOption">@rangeOption.GetDisplayName()</option>
+            }
+        </select>
+    </header>
+    <BarChart
+        @ref="barChart"
+        Height="350"
+        HeightUnit="Unit.Px"
+    />
+</section>
+
+@code {
+    private ChartFactory? chartFactory;
+    private List<PulseRangeSelection> RangeOptions => Enum.GetValues<PulseRangeSelection>().ToList();
+    private PulseRangeSelection SelectedRange = PulseRangeSelection.ThisWeek;
+
+    private BarChart? barChart;
+    private BarChartOptions? barChartOptions;
+    private ChartData? chartData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        chartFactory = new ChartFactory(ScrobbleService);
+        await BuildChartAsync(SelectedRange);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && barChart is not null)
+        {
+            await barChart.InitializeAsync(chartData, barChartOptions);
+        }
+    }
+
+    private async Task OnSelectionChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<PulseRangeSelection>(e.Value?.ToString(), out var selected))
+        {
+            SelectedRange = selected;
+            await BuildChartAsync(SelectedRange);
+            if (barChart is not null)
+            {
+                await barChart.UpdateAsync(chartData, barChartOptions);
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task BuildChartAsync(PulseRangeSelection option)
+    {
+        if (chartFactory is null) return;
+
+        var (data, options) = await chartFactory.CreateChartBuildDataAsync(option);
+        chartData = data;
+        barChartOptions = options;
+    }
+
+}

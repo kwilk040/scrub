@@ -1,0 +1,30 @@
+@ListenbrainzService_HostAddress = http://localhost:5276
+
+###
+GET {{ListenbrainzService_HostAddress}}/validate-token
+Authorization: Bearer AAF0
+
+###
+POST {{ListenbrainzService_HostAddress}}/submit-listens
+Content-Type: application/json
+
+{
+  "listen_type": "single",
+  "payload": [
+    {
+      "listened_at": 1234567,
+      "track_metadata": {
+        "artist_name": "artist",
+        "track_name": "track",
+        "release_name": "release",
+        "additional_info": {
+          "submission_client": "navidrome",
+          "submission_client_version": "0.1",
+          "tracknumber": 1,
+          "duration_ms": 1234545
+        }
+      }
+
+    }
+  ]
+}

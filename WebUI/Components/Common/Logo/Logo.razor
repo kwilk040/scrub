@@ -1,0 +1,11 @@
+﻿@inject NavigationManager Navigation
+<h1 class="text-uppercase text-center fw-bold p-1 bg-pine rounded-2"
+    style="cursor: pointer;"
+    @onclick="GoHome">
+    Scrub<span class="text-gold">FM</span>
+</h1>
+
+@code
+{
+    private void GoHome() => Navigation.NavigateTo("/");
+}
